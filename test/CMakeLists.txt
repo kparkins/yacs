@@ -22,6 +22,8 @@ target_compile_features(gtest_main PUBLIC cxx_std_17)
 target_compile_features(gmock PUBLIC cxx_std_17)
 target_compile_features(gmock_main PUBLIC cxx_std_17)
 
+include_directories($<TARGET_PROPERTY:yacs,INTERFACE_INCLUDE_DIRECTORIES>)
+add_compile_options($<TARGET_PROPERTY:yacs,INTERFACE_COMPILE_OPTIONS>)
 
 function(SETUP_TARGET TARGET_NAME)
     target_compile_features(${TARGET_NAME} PRIVATE ${YACS_CXX_STD})

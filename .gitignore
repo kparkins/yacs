@@ -1,2 +1,5 @@
+build/
 Testing/
-.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json

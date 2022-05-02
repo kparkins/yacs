@@ -16,6 +16,20 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+option(YACS_USE_SANITIZER "Enable sanitizers by adding -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined flags if available." ON)
+
+if(YACS_USE_SANITIZER)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        set(YACS_HAS_SANITIZER TRUE CACHE BOOL "" FORCE)
+        message("USing sanitizer")
+        mark_as_advanced(YACS_HAS_SANITIZER)
+    endif()
+
+    if(NOT YACS_HAS_SANITIZER)
+        message(VERBOSE "Option to use AddressSanitizer is set but support is not available. Skipped adding flags.")
+    endif()
+endif()
+
 add_library(yacs INTERFACE)
 
 target_include_directories(
@@ -33,6 +47,11 @@ target_sources(
     INTERFACE
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.h>
 )
+
+if(YACS_HAS_SANITIZER)
+    target_compile_options(yacs INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer>)
+    target_link_libraries(yacs INTERFACE $<$<CONFIG:Debug>:-fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer>)
+endif()
 
 option(YACS_BUILD_TESTING "Enable building tests." ON)
 
