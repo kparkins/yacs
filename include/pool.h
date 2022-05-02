@@ -27,17 +27,83 @@ class pool {
 constexpr size_t POOL_DEFAULT_CAPACITY = 8192;
 constexpr size_t POOL_UNALLOCATED_INDEX = static_cast<size_t>(-1);
 
+template<typename T>
 class dense_pool_iterator {
- public:
+  public:
+    dense_pool_iterator(vector<size_t, T>& packed);
+    dense_pool_iterator(const dense_pool_iterator & other);
+    dense_pool_iterator& operator=(const dense_pool_iterator& other);
+
+    dense_pool_iterator& operator++();
+    dense_pool_iterator operator++(int);
+
+    bool operator==(const dense_pool_iterator & other);
+    bool operator!=(const dense_pool_iterator & other);
+    
+    T& operator*();
+    T* operator->();
+  
+  protected:
+    dense_pool_iterator(dense_pool_iterator&& other) = delete;
+    dense_pool_iterator& operator=(dense_pool_iterator&&) = delete;
+  
+    vector<pair<size_t, T>> & packed;
 };
 
+template<typename T>
 class dense_pool_const_iterator {
- public:
+  public:
+    dense_pool_const_iterator(const vector<size_t, T>& packed);
+    dense_pool_const_iterator(const dense_pool_const_iterator & other);
+    dense_pool_const_iterator& operator=(const dense_pool_const_iterator& other);
+
+    dense_pool_const_iterator& operator++();
+    dense_pool_const_iterator operator++(int);
+
+    bool operator==(const dense_pool_const_iterator & other);
+    bool operator!=(const dense_pool_const_iterator & other);
+    
+    const T& operator*() const;
+    const T* operator->() const;
+  
+  protected:
+    dense_pool_const_iterator(dense_pool_const_iterator&& other) = delete;
+    dense_pool_const_iterator& operator=(dense_pool_const_iterator&&) = delete;
+
+    const vector<pair<size_t, T>> & packed;
+};
+
+template<typename T>
+class const_sparse_iterator {
+  public:
+    const_sparse_iterator(const vector<size_t> & sparse);
+    const_sparse_iterator(const const_sparse_iterator & other);
+    const_sparse_iterator& operator=(const const_sparse_iterator& other);
+
+    const_sparse_iterator& operator++();
+    const_sparse_iterator operator++(int);
+
+    bool operator==(const const_sparse_iterator & other);
+    bool operator!=(const const_sparse_iterator & other);
+    
+    const T& operator*() const;
+    const T* operator->() const;
+  
+  protected:
+    const_sparse_iterator(const_sparse_iterator&& other) = delete;
+    const_sparse_iterator& operator=(const_sparse_iterator&&) = delete;
+
+    const vector<size_t> & sparse;
 };
 
 template <typename T>
 class dense_pool {
  public:
+
+  using iterator = dense_pool_iterator<T>;
+  using const_iterator = dense_pool_const_iterator<T>;
+  using const_sparse_iterator = dense_pool_const_iterator<size_t>;
+
   dense_pool();
   dense_pool(dense_pool&& other);
   dense_pool(const dense_pool& other);
@@ -64,13 +130,13 @@ class dense_pool {
   inline bool empty() const;
   inline void reserve(size_t n);
 
-  dense_pool_iterator begin();
-  dense_pool_iterator end();
-  dense_pool_const_iterator begin() const;
-  dense_pool_const_iterator end() const;
+  iterator begin();
+  iterator end();
+  const_iterator begin() const;
+  const_iterator end() const;
 
-  dense_pool_const_iterator sparse_begin() const;
-  dense_pool_const_iterator sparse_end() const;
+  const_sparse_iterator sparse_begin() const;
+  const_sparse_iterator sparse_end() const;
 
   void sort();
   void sort(function<bool(const T&, const T&)> comparator);
@@ -211,33 +277,33 @@ inline void dense_pool<T>::reserve(size_t n) {
 }
 
 template <typename T>
-dense_pool_iterator dense_pool<T>::begin() {
-  return dense_pool_iterator{};
+typename dense_pool<T>::iterator dense_pool<T>::begin() {
+  return dense_pool_iterator<T>(m_packed);
 }
 
 template <typename T>
-dense_pool_iterator dense_pool<T>::end() {
-  return dense_pool_iterator{};
+typename dense_pool<T>::iterator dense_pool<T>::end() {
+  return dense_pool_iterator<T>(m_packed);
 }
 
 template <typename T>
-dense_pool_const_iterator dense_pool<T>::begin() const {
-  return dense_pool_const_iterator{};
+typename dense_pool<T>::const_iterator dense_pool<T>::begin() const {
+  return dense_pool_const_iterator<T>(m_packed);
 }
 
 template <typename T>
-dense_pool_const_iterator dense_pool<T>::end() const {
-  return dense_pool_const_iterator{};
+typename dense_pool<T>::const_iterator dense_pool<T>::end() const {
+  return dense_pool_const_iterator<T>(m_packed);
 }
 
 template <typename T>
-dense_pool_const_iterator dense_pool<T>::sparse_begin() const {
-  return dense_pool_const_iterator{};
+typename dense_pool<T>::const_sparse_iterator dense_pool<T>::sparse_begin() const {
+  return dense_pool_const_iterator<size_t>(m_sparse);
 }
 
 template <typename T>
-dense_pool_const_iterator dense_pool<T>::sparse_end() const {
-  return dense_pool_const_iterator{};
+typename dense_pool<T>::const_sparse_iterator dense_pool<T>::sparse_end() const {
+  return dense_pool_const_iterator<size_t>(m_sparse);
 }
 
 template <typename T>
