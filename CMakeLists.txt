@@ -8,7 +8,7 @@ string(JOIN "." YACS_VERSION ${YACS_VERSION})
 project(
     yacs
     VERSION ${YACS_VERSION}
-    DESCRIPTION "Yet Another Component System - another day another yak shaved"
+    DESCRIPTION "Yet Another Component System - another day another Yak shaved"
     LANGUAGES C CXX
 )
 
