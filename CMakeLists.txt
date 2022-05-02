@@ -16,12 +16,11 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-option(YACS_USE_SANITIZER "Enable sanitizers by adding -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined flags if available." ON)
+option(YACS_USE_SANITIZER "Enable address sanitizer by adding -fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer" ON)
 
 if(YACS_USE_SANITIZER)
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
         set(YACS_HAS_SANITIZER TRUE CACHE BOOL "" FORCE)
-        message("USing sanitizer")
         mark_as_advanced(YACS_HAS_SANITIZER)
     endif()
 
