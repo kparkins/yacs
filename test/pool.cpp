@@ -1,52 +1,43 @@
+#include "pool.h"
+
 #include <gtest/gtest.h>
 
 #include <iostream>
 
-#include "Pool.h"
-
 typedef struct data_struct {
-  data_struct() = default;
+  data_struct() : x(new int(0)), y(0) {}
   data_struct(int x, int y) : x(new int(x)), y(y) {}
   ~data_struct() {
-    std::cout << "In destructor " << x << "  " << y << std::endl;
     if (x) {
-      std::cout << "Deleting " << *x << std::endl;
       delete x;
     }
   }
-  data_struct(const data_struct& other) {
-    x = new int(*other.x);
-    y = other.y;
-  }
-  data_struct(data_struct&& other) {
-    x = other.x;
-    other.x = nullptr;
-    y = other.y;
-  }
-  data_struct& operator=(const data_struct& other) {
-    if (&other != this) {
-      delete x;
-      x = new int(*other.x);
-      y = other.y;
-    }
+  data_struct(const data_struct& other) : x(new int(*other.x)), y(other.y) {}
+
+  data_struct(data_struct&& other) : x(nullptr), y(0) { swap(*this, other); }
+
+  data_struct& operator=(data_struct other) {
+    swap(*this, other);
     return *this;
   }
+
   data_struct& operator=(data_struct&& other) {
-    if (this != &other) {
-      delete x;
-      x = other.x;
-      other.x = nullptr;
-      y = other.y;
-    }
+    swap(*this, other);
     return *this;
+  }
+
+  friend void swap(data_struct& first, data_struct& second) {
+    using std::swap;
+    swap(first.x, second.x);
+    swap(first.y, second.y);
   }
 
   int* x;
   int y;
 } data_struct;
 
-TEST(MAIN, test) {
-  dense_pool<data_struct> pool;
+TEST(pool, pool) {
+  yacs::dense_pool<data_struct> pool;
 
   for (int i = 0; i < 10; i++) {
     pool.construct(i, i, -i);
@@ -61,6 +52,5 @@ TEST(MAIN, test) {
   for (int i = 0; i < size; i++) {
     pool.destroy(i);
   }
-
   ASSERT_EQ(pool.size(), 0);
 }

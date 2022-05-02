@@ -1,5 +1,5 @@
-#ifndef GAME_POOL_H
-#define GAME_POOL_H
+#ifndef YACS_POOL_H
+#define YACS_POOL_H
 
 #include <algorithm>
 #include <cassert>
@@ -15,6 +15,8 @@ using std::pair;
 using std::piecewise_construct;
 using std::swap;
 using std::vector;
+
+namespace yacs {
 
 class pool {
  public:
@@ -271,4 +273,5 @@ void dense_pool<T>::sort(const vector<size_t>& sparse_order) {
   }
 }
 
+}  // namespace yacs
 #endif
