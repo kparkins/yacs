@@ -142,10 +142,10 @@ template <typename T>
 void dense_pool<T>::destroy(size_t sparse_index) {
   assert(sparse_index < m_sparse.size());
   assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
+  
   size_t packed_index = m_sparse[sparse_index];
   size_t last_packed_index = m_packed.size() - 1;
   size_t last_sparse_index = get<0>(m_packed[last_packed_index]);
-  int* x = new int(1);
 
   m_sparse[last_sparse_index] = packed_index;
   m_sparse[sparse_index] = POOL_UNALLOCATED_INDEX;
