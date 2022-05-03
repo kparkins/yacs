@@ -29,23 +29,20 @@ constexpr size_t POOL_UNALLOCATED_INDEX = static_cast<size_t>(-1);
 template <typename T>
 class dense_pool_iterator {
  public:
-  dense_pool_iterator(vector<size_t, T>& packed, size_t index = 0);
+  dense_pool_iterator(vector<pair<size_t, T>>& packed, size_t index = 0);
   dense_pool_iterator(const dense_pool_iterator& other);
   dense_pool_iterator& operator=(dense_pool_iterator other);
 
   dense_pool_iterator& operator++();
   dense_pool_iterator operator++(int);
 
-  bool operator==(const dense_pool_iterator& other);
-  bool operator!=(const dense_pool_iterator& other);
+  bool operator==(const dense_pool_iterator& other) const;
+  bool operator!=(const dense_pool_iterator& other) const;
 
   T& operator*();
   T* operator->();
 
  protected:
-  dense_pool_iterator(dense_pool_iterator&& other) = delete;
-  dense_pool_iterator& operator=(dense_pool_iterator&&) = delete;
-
   size_t index;
   vector<pair<size_t, T>>& packed;
 };
@@ -53,23 +50,21 @@ class dense_pool_iterator {
 template <typename T>
 class dense_pool_const_iterator {
  public:
-  dense_pool_const_iterator(const vector<size_t, T>& packed, size_t index = 0);
+  dense_pool_const_iterator(const vector<pair<size_t, T>>& packed,
+                            size_t index = 0);
   dense_pool_const_iterator(const dense_pool_const_iterator& other);
   dense_pool_const_iterator& operator=(dense_pool_const_iterator other);
 
   dense_pool_const_iterator& operator++();
   dense_pool_const_iterator operator++(int);
 
-  bool operator==(const dense_pool_const_iterator& other);
-  bool operator!=(const dense_pool_const_iterator& other);
+  bool operator==(const dense_pool_const_iterator& other) const;
+  bool operator!=(const dense_pool_const_iterator& other) const;
 
   const T& operator*() const;
   const T* operator->() const;
 
  protected:
-  dense_pool_const_iterator(dense_pool_const_iterator&& other) = delete;
-  dense_pool_const_iterator& operator=(dense_pool_const_iterator&&) = delete;
-
   size_t index;
   const vector<pair<size_t, T>>& packed;
 };
@@ -84,16 +79,13 @@ class const_sparse_iterator {
   const_sparse_iterator& operator++();
   const_sparse_iterator operator++(int);
 
-  bool operator==(const const_sparse_iterator& other);
-  bool operator!=(const const_sparse_iterator& other);
+  bool operator==(const const_sparse_iterator& other) const;
+  bool operator!=(const const_sparse_iterator& other) const;
 
   const T& operator*() const;
   const T* operator->() const;
 
  protected:
-  const_sparse_iterator(const_sparse_iterator&& other) = delete;
-  const_sparse_iterator& operator=(const_sparse_iterator&&) = delete;
-
   size_t index;
   const vector<size_t>& sparse;
 };
@@ -350,13 +342,13 @@ void dense_pool<T>::sort(const vector<size_t>& sparse_order) {
 }
 
 template <typename T>
-dense_pool_iterator<T>::dense_pool_iterator(vector<size_t, T>& packed,
+dense_pool_iterator<T>::dense_pool_iterator(vector<pair<size_t, T>>& packed,
                                             size_t index)
-    : packed(packed), index(index) {}
+    : index(index), packed(packed) {}
 
 template <typename T>
 dense_pool_iterator<T>::dense_pool_iterator(const dense_pool_iterator& other)
-    : packed(other.packed), index(other.index) {}
+    : index(other.index), packed(other.packed) {}
 
 template <typename T>
 dense_pool_iterator<T>& dense_pool_iterator<T>::operator=(
@@ -379,11 +371,13 @@ dense_pool_iterator<T> dense_pool_iterator<T>::operator++(int) {
 }
 
 template <typename T>
-bool dense_pool_iterator<T>::operator==(const dense_pool_iterator& other) {
+bool dense_pool_iterator<T>::operator==(
+    const dense_pool_iterator& other) const {
   return index == other.index;
 }
 template <typename T>
-bool dense_pool_iterator<T>::operator!=(const dense_pool_iterator& other) {
+bool dense_pool_iterator<T>::operator!=(
+    const dense_pool_iterator& other) const {
   return index != other.index;
 }
 
@@ -399,7 +393,7 @@ T* dense_pool_iterator<T>::operator->() {
 
 template <typename T>
 dense_pool_const_iterator<T>::dense_pool_const_iterator(
-    const vector<size_t, T>& packed,
+    const vector<pair<size_t, T>>& packed,
     size_t index)
     : packed(packed), index(index) {}
 
@@ -430,12 +424,12 @@ dense_pool_const_iterator<T> dense_pool_const_iterator<T>::operator++(int) {
 
 template <typename T>
 bool dense_pool_const_iterator<T>::operator==(
-    const dense_pool_const_iterator& other) {
+    const dense_pool_const_iterator& other) const {
   return index == other.index;
 }
 template <typename T>
 bool dense_pool_const_iterator<T>::operator!=(
-    const dense_pool_const_iterator& other) {
+    const dense_pool_const_iterator& other) const {
   return index != other.index;
 }
 

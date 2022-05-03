@@ -47,7 +47,7 @@ target_compile_features(yacs INTERFACE cxx_std_17)
 target_sources(
     yacs 
     INTERFACE
-        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.h>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.hpp>
 )
 
 if(YACS_HAS_SANITIZER)

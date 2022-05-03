@@ -3,7 +3,7 @@
 #include <memory>
 
 #include "data_struct.hpp"
-#include "pool.h"
+#include "pool.hpp"
 
 using std::move;
 
@@ -34,6 +34,19 @@ bool dense_pool_deep_equal(const yacs::dense_pool<T>& left,
     }
   }
   return true;
+}
+
+template <typename T>
+bool dense_pool_iterator_equal(yacs::dense_pool_iterator<T>& it1,
+                               yacs::dense_pool_iterator<T>& it2,
+                               const yacs::dense_pool_iterator<T>& end) {
+  bool result = true;
+  for (; it1 != end; ++it1, ++it2) {
+    result &= *it1 == *it2;
+  }
+  result &= it1 == end;
+  result &= it2 == end;
+  return result;
 }
 
 TEST_F(dense_pool_test, dense_pool_move_constructor) {
@@ -156,4 +169,41 @@ TEST_F(dense_pool_test, dense_pool_reserve_capacity) {
 TEST_F(dense_pool_test, dense_pool_empty) {
   ASSERT_TRUE(empty.empty());
   ASSERT_FALSE(pool.empty());
+}
+
+TEST_F(dense_pool_test, dense_pool_basic_iterator) {
+  auto it = pool.begin();
+  size_t count = 0;
+  for (; it != pool.end(); ++it) {
+    count++;
+  }
+  ASSERT_EQ(pool.size(), count);
+}
+
+TEST_F(dense_pool_test, dense_pool_mutable_iterator_copy_construct) {
+  auto it = pool.begin();
+  for (int i = 0; i < 5; ++i) {
+    ++it;
+  }
+  auto copy_it(it);
+  ASSERT_TRUE(dense_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
+}
+
+TEST_F(dense_pool_test, dense_pool_mutable_iterator_copy_assignment) {
+  auto it = pool.begin();
+  for (int i = 0; i < 3; ++i) {
+    ++it;
+  }
+  auto copy_it = it;
+  ASSERT_TRUE(dense_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
+}
+
+TEST_F(dense_pool_test, dense_pool_mutable_iterator_post_increment) {
+  auto post_it = pool.begin();
+  auto pre_it = pool.begin();
+  post_it++;
+  for (; post_it != pool.end();) {
+    ASSERT_EQ((post_it++)->y, (++pre_it)->y);
+  }
+  ASSERT_EQ(post_it, pool.end());
 }
