@@ -15,14 +15,14 @@ class dense_pool_test : public ::testing::Test {
       expected.construct(i, i, -i);
     }
   }
-  yacs::dense_pool<data_struct> empty;
-  yacs::dense_pool<data_struct> expected;
-  yacs::dense_pool<data_struct> pool;
+  yacs::packed_pool<data_struct> empty;
+  yacs::packed_pool<data_struct> expected;
+  yacs::packed_pool<data_struct> pool;
 };
 
 template <typename T>
-bool dense_pool_deep_equal(const yacs::dense_pool<T>& left,
-                           const yacs::dense_pool<T>& right) {
+bool dense_pool_deep_equal(const yacs::packed_pool<T>& left,
+                           const yacs::packed_pool<T>& right) {
   if (left.size() != right.size()) {
     return false;
   }
@@ -37,9 +37,9 @@ bool dense_pool_deep_equal(const yacs::dense_pool<T>& left,
 }
 
 template <typename T>
-bool dense_pool_iterator_equal(yacs::dense_pool_iterator<T>& it1,
-                               yacs::dense_pool_iterator<T>& it2,
-                               const yacs::dense_pool_iterator<T>& end) {
+bool dense_pool_iterator_equal(yacs::packed_value_iterator<T>& it1,
+                               yacs::packed_value_iterator<T>& it2,
+                               const yacs::packed_value_iterator<T>& end) {
   bool result = true;
   for (; it1 != end; ++it1, ++it2) {
     result &= *it1 == *it2;
@@ -57,7 +57,7 @@ void move_iterator(T& it, size_t n) {
 }
 
 TEST_F(dense_pool_test, dense_pool_move_constructor) {
-  yacs::dense_pool<data_struct> moved(move(pool));
+  yacs::packed_pool<data_struct> moved(move(pool));
   ASSERT_EQ(pool.size(), 0);
   ASSERT_EQ(moved.size(), 10);
   ASSERT_FALSE(dense_pool_deep_equal<data_struct>(pool, moved));
@@ -65,19 +65,19 @@ TEST_F(dense_pool_test, dense_pool_move_constructor) {
 }
 
 TEST_F(dense_pool_test, dense_pool_copy_constructor) {
-  yacs::dense_pool<data_struct> copied(pool);
+  yacs::packed_pool<data_struct> copied(pool);
   ASSERT_TRUE(dense_pool_deep_equal<data_struct>(pool, copied));
   ASSERT_TRUE(dense_pool_deep_equal<data_struct>(expected, copied));
 }
 
 TEST_F(dense_pool_test, dense_pool_copy_assignment) {
-  yacs::dense_pool<data_struct> copied = pool;
+  yacs::packed_pool<data_struct> copied = pool;
   ASSERT_TRUE(dense_pool_deep_equal<data_struct>(pool, copied));
   ASSERT_TRUE(dense_pool_deep_equal<data_struct>(expected, copied));
 }
 
 TEST_F(dense_pool_test, dense_pool_move_assignment) {
-  yacs::dense_pool<data_struct> moved = std::move(pool);
+  yacs::packed_pool<data_struct> moved = std::move(pool);
   ASSERT_EQ(pool.size(), 0);
   ASSERT_EQ(moved.size(), 10);
   ASSERT_FALSE(dense_pool_deep_equal<data_struct>(pool, moved));
@@ -85,7 +85,7 @@ TEST_F(dense_pool_test, dense_pool_move_assignment) {
 }
 
 TEST_F(dense_pool_test, dense_pool_construct_fn) {
-  yacs::dense_pool<data_struct> test;
+  yacs::packed_pool<data_struct> test;
   for (int i = 0; i < 100; ++i) {
     test.construct(i, 2 * i, -2 * i);
   }
