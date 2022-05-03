@@ -82,6 +82,7 @@ TEST_F(dense_pool_test, dense_pool_destroy_index) {
     pool.destroy(i);
     ASSERT_EQ(pool.size(), 9 - i);
   }
+  ASSERT_TRUE(dense_pool_deep_equal<data_struct>(pool, empty));
 }
 
 TEST_F(dense_pool_test, dense_pool_destroy_all) {
@@ -98,4 +99,61 @@ TEST_F(dense_pool_test, dense_pool_contains) {
   ASSERT_FALSE(pool.contains(-1));
 }
 
-TEST_F(dense_pool_test, dense_pool_mutable_access) {}
+TEST_F(dense_pool_test, dense_pool_mutable_access) {
+  for (int i = 0; i < pool.size(); ++i) {
+    auto& element = pool.access(i);
+    *(element.x) *= 2;
+    element.y *= 2;
+  }
+  for (int i = 0; i < pool.size(); ++i) {
+    auto& element = pool.access(i);
+    auto& reference = expected.access(i);
+    ASSERT_EQ(*element.x, (*reference.x) * 2);
+    ASSERT_EQ(element.y, reference.y * 2);
+  }
+}
+
+TEST_F(dense_pool_test, dense_pool_mutable_array_access) {
+  for (int i = 0; i < pool.size(); ++i) {
+    pool[i].y *= 2;
+    *(pool[i].x) *= 2;
+  }
+  for (int i = 0; i < pool.size(); ++i) {
+    auto& element = pool[i];
+    auto& reference = expected[i];
+    ASSERT_EQ(*element.x, (*reference.x) * 2);
+    ASSERT_EQ(element.y, reference.y * 2);
+  }
+}
+
+TEST_F(dense_pool_test, dense_pool_immutable_access) {
+  for (int i = 0; i < pool.size(); ++i) {
+    const auto& element = pool.access(i);
+    ASSERT_EQ(element, expected.access(i));
+  }
+}
+
+TEST_F(dense_pool_test, dense_pool_immutable_array_access) {
+  for (int i = 0; i < pool.size(); ++i) {
+    const auto& element = pool[i];
+    ASSERT_EQ(element, expected[i]);
+  }
+}
+
+TEST_F(dense_pool_test, dense_pool_size) {
+  ASSERT_EQ(pool.size(), 10);
+  ASSERT_EQ(expected.size(), 10);
+  ASSERT_EQ(empty.size(), 0);
+  pool.construct(11, -2, 3);
+  ASSERT_EQ(pool.size(), 11);
+}
+
+TEST_F(dense_pool_test, dense_pool_reserve_capacity) {
+  pool.reserve(10000);
+  ASSERT_EQ(pool.capacity(), 10000);
+}
+
+TEST_F(dense_pool_test, dense_pool_empty) {
+  ASSERT_TRUE(empty.empty());
+  ASSERT_FALSE(pool.empty());
+}
