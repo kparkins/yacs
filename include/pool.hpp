@@ -255,13 +255,13 @@ typename packed_pool<T>::reverse_value_iterator packed_pool<T>::rend() {
 template <typename T>
 typename packed_pool<T>::const_packed_iterator packed_pool<T>::packed_begin()
     const {
-  return const_packed_iterator(m_packed);
+  return const_packed_iterator(&m_packed);
 }
 
 template <typename T>
 typename packed_pool<T>::const_packed_iterator packed_pool<T>::packed_end()
     const {
-  return const_packed_iterator(m_packed), m_packed.size();
+  return const_packed_iterator(&m_packed, m_packed.size());
 }
 
 template <typename T>

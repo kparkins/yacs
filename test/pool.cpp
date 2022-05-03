@@ -9,6 +9,11 @@ using std::move;
 
 class packed_pool_test : public ::testing::Test {
  protected:
+  using value_iterator_type = yacs::packed_pool<data_struct>::value_iterator;
+  using const_packed_iterator_type =
+      yacs::packed_pool<data_struct>::const_packed_iterator;
+  using const_sparse_iterator_type =
+      yacs::packed_pool<data_struct>::const_sparse_iterator;
   void SetUp() {
     for (int i = 0; i < 10; i++) {
       pool.construct(i, i, -i);
@@ -36,10 +41,10 @@ bool packed_pool_deep_equal(const yacs::packed_pool<T>& left,
   return true;
 }
 
-template <typename T, typename I = size_t>
-bool packed_pool_iterator_equal(yacs::packed_value_iterator<I, T>& it1,
-                                yacs::packed_value_iterator<I, T>& it2,
-                                const yacs::packed_value_iterator<I, T>& end) {
+template <typename Iterator>
+bool packed_pool_iterator_equal(Iterator& it1,
+                                Iterator& it2,
+                                const Iterator& end) {
   bool result = true;
   for (; it1 != end; ++it1, ++it2) {
     result &= *it1 == *it2;
@@ -197,14 +202,16 @@ TEST_F(packed_pool_test, packed_value_iterator_copy_construct) {
   auto it = pool.begin();
   advance_iterator(it, 5);
   auto copy_it(it);
-  ASSERT_TRUE(packed_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
+  ASSERT_TRUE(
+      packed_pool_iterator_equal<value_iterator_type>(it, copy_it, pool.end()));
 }
 
 TEST_F(packed_pool_test, packed_value_iterator_copy_assignment) {
   auto it = pool.begin();
   advance_iterator(it, 3);
   auto copy_it = it;
-  ASSERT_TRUE(packed_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
+  ASSERT_TRUE(
+      packed_pool_iterator_equal<value_iterator_type>(it, copy_it, pool.end()));
 }
 
 TEST_F(packed_pool_test, packed_value_iterator_post_increment) {
@@ -228,28 +235,201 @@ TEST_F(packed_pool_test, packed_value_iterator_decrement_last) {
 
 TEST_F(packed_pool_test, packed_value_iterator_pre_decrement) {
   auto it = pool.begin();
-  advance_iterator(it, 2);
-  ASSERT_EQ(*(it->x), 2);
-  --it;
-  ASSERT_EQ(*(it->x), 1);
-  --it;
-  ASSERT_EQ(*(it->x), 0);
+  advance_iterator(it, 3);
+  ASSERT_EQ(*((it)->x), 3);
+  ASSERT_EQ(*((--it)->x), 2);
+  ASSERT_EQ(*((--it)->x), 1);
+  ASSERT_EQ(*((--it)->x), 0);
 }
 
 TEST_F(packed_pool_test, packed_value_iterator_post_decrement) {
   auto it = pool.begin();
   advance_iterator(it, 2);
-  ASSERT_EQ(*(it->x), 2);
-  --it;
-  ASSERT_EQ(*(it->x), 1);
-  --it;
-  ASSERT_EQ(*(it->x), 0);
+  ASSERT_EQ(*((it--)->x), 2);
+  ASSERT_EQ(*((it--)->x), 1);
+  ASSERT_EQ(*((it--)->x), 0);
 }
 
-TEST_F(packed_pool_test, packed_value_iterator_equal) {}
+TEST_F(packed_pool_test, packed_value_iterator_equal) {
+  auto it1 = pool.begin();
+  auto it2 = pool.begin();
+  for (; it2 != pool.end(); ++it1, ++it2) {
+    ASSERT_EQ(it1, it2);
+  }
+}
 
-TEST_F(packed_pool_test, packed_value_iterator_not_equal) {}
+TEST_F(packed_pool_test, packed_value_iterator_not_equal) {
+  auto it1 = pool.begin();
+  auto it2 = ++pool.begin();
+  for (; it2 != pool.end(); ++it1, ++it2) {
+    ASSERT_NE(it1, it2);
+  }
+}
 
-TEST_F(packed_pool_test, packed_value_iterator_dereference) {}
+// const packed iterator
+TEST_F(packed_pool_test, const_packed_iterator_default_constructor) {
+  yacs::const_packed_iterator<size_t, data_struct> it1;
+  yacs::const_packed_iterator<size_t, data_struct> it2;
+  ASSERT_EQ(it1, it2);
+}
 
-TEST_F(packed_pool_test, packed_value_iterator_arrow) {}
+TEST_F(packed_pool_test, packed_pool_packed_iterator) {
+  auto it = pool.packed_begin();
+  size_t count = 0;
+  for (; it != pool.packed_end(); ++it) {
+    count++;
+  }
+  ASSERT_EQ(pool.size(), count);
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_copy_construct) {
+  auto it = pool.packed_begin();
+  advance_iterator(it, 5);
+  auto copy_it(it);
+  ASSERT_TRUE(packed_pool_iterator_equal<const_packed_iterator_type>(
+      it, copy_it, pool.packed_end()));
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_copy_assignment) {
+  auto it = pool.packed_begin();
+  advance_iterator(it, 3);
+  auto copy_it = it;
+  ASSERT_TRUE(packed_pool_iterator_equal<const_packed_iterator_type>(
+      it, copy_it, pool.packed_end()));
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_post_increment) {
+  auto post_it = pool.packed_begin();
+  auto pre_it = pool.packed_begin();
+  advance_iterator(post_it, 1);
+  for (; post_it != pool.packed_end();) {
+    ASSERT_EQ((post_it++)->second.y, (++pre_it)->second.y);
+  }
+  ASSERT_EQ(post_it, pool.packed_end());
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_decrement_last) {
+  auto it = pool.packed_end();
+  auto& last = pool.access(pool.size() - 1);
+  --it;
+  ASSERT_EQ(it->second, last);
+  ASSERT_EQ((it--)->second, last);
+  ASSERT_EQ(it->second, pool.access(pool.size() - 2));
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_pre_decrement) {
+  auto it = pool.packed_begin();
+  advance_iterator(it, 3);
+  ASSERT_EQ(*((it)->second.x), 3);
+  ASSERT_EQ(*((--it)->second.x), 2);
+  ASSERT_EQ(*((--it)->second.x), 1);
+  ASSERT_EQ(*((--it)->second.x), 0);
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_post_decrement) {
+  auto it = pool.packed_begin();
+  advance_iterator(it, 2);
+  ASSERT_EQ(*((it--)->second.x), 2);
+  ASSERT_EQ(*((it--)->second.x), 1);
+  ASSERT_EQ(*((it--)->second.x), 0);
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_equal) {
+  auto it1 = pool.packed_begin();
+  auto it2 = pool.packed_begin();
+  for (; it2 != pool.packed_end(); ++it1, ++it2) {
+    ASSERT_EQ(it1, it2);
+  }
+}
+
+TEST_F(packed_pool_test, const_packed_iterator_not_equal) {
+  auto it1 = pool.packed_begin();
+  auto it2 = ++pool.packed_begin();
+  for (; it2 != pool.packed_end(); ++it1, ++it2) {
+    ASSERT_NE(it1, it2);
+  }
+}
+
+// const sparse iterator
+TEST_F(packed_pool_test, const_sparse_iterator_default_constructor) {
+  yacs::const_sparse_iterator<size_t, data_struct> it1;
+  yacs::const_sparse_iterator<size_t, data_struct> it2;
+  ASSERT_EQ(it1, it2);
+}
+
+TEST_F(packed_pool_test, packed_pool_sparse_iterator) {
+  auto it = pool.sparse_begin();
+  size_t count = 0;
+  for (; it != pool.sparse_end(); ++it) {
+    count++;
+  }
+  ASSERT_EQ(pool.size(), count);
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_copy_construct) {
+  auto it = pool.sparse_begin();
+  advance_iterator(it, 5);
+  auto copy_it(it);
+  ASSERT_TRUE(packed_pool_iterator_equal<const_sparse_iterator_type>(
+      it, copy_it, pool.sparse_end()));
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_copy_assignment) {
+  auto it = pool.sparse_begin();
+  advance_iterator(it, 3);
+  auto copy_it = it;
+  ASSERT_TRUE(packed_pool_iterator_equal<const_sparse_iterator_type>(
+      it, copy_it, pool.sparse_end()));
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_post_increment) {
+  auto post_it = pool.sparse_begin();
+  auto pre_it = pool.sparse_begin();
+  advance_iterator(post_it, 1);
+  for (; post_it != pool.sparse_end();) {
+    ASSERT_EQ(*post_it++, *++pre_it);
+  }
+  ASSERT_EQ(post_it, pool.sparse_end());
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_decrement_last) {
+  auto it = pool.sparse_end();
+  auto last = pool.size() - 1;
+  --it;
+  ASSERT_EQ(*it, last);
+  ASSERT_EQ(*(it--), last);
+  ASSERT_EQ(*it, pool.size() - 2);
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_pre_decrement) {
+  auto it = pool.sparse_begin();
+  advance_iterator(it, 3);
+  ASSERT_EQ(*(it), 3);
+  ASSERT_EQ(*(--it), 2);
+  ASSERT_EQ(*(--it), 1);
+  ASSERT_EQ(*(--it), 0);
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_post_decrement) {
+  auto it = pool.sparse_begin();
+  advance_iterator(it, 2);
+  ASSERT_EQ(*(it--), 2);
+  ASSERT_EQ(*(it--), 1);
+  ASSERT_EQ(*(it--), 0);
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_equal) {
+  auto it1 = pool.sparse_begin();
+  auto it2 = pool.sparse_begin();
+  for (; it2 != pool.sparse_end(); ++it1, ++it2) {
+    ASSERT_EQ(it1, it2);
+  }
+}
+
+TEST_F(packed_pool_test, const_sparse_iterator_not_equal) {
+  auto it1 = pool.sparse_begin();
+  auto it2 = ++pool.sparse_begin();
+  for (; it2 != pool.sparse_end(); ++it1, ++it2) {
+    ASSERT_NE(it1, it2);
+  }
+}

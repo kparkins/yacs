@@ -92,7 +92,7 @@ class const_packed_iterator {
 
   const_packed_iterator() : index(-1), packed(nullptr) {}
 
-  const_packed_iterator(vector<value_type>* packed, size_type index = 0)
+  const_packed_iterator(const vector<value_type>* packed, size_type index = 0)
       : index(index), packed(packed) {}
 
   const_packed_iterator(const const_packed_iterator& other)
