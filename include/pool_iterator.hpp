@@ -13,6 +13,12 @@ namespace yacs {
 template <typename T>
 class packed_value_iterator {
  public:
+  using value_type = T;
+  using pointer = T*;
+  using reference = T&;
+  using difference_type = size_t;
+  using iterator_category = std::bidirectional_iterator_tag;
+
   packed_value_iterator() : index(-1), packed(nullptr) {}
 
   packed_value_iterator(vector<pair<size_t, T>>* packed, size_t index = 0)
@@ -65,12 +71,22 @@ class packed_value_iterator {
   vector<pair<size_t, T>>* packed;
 };
 
-template <typename T>
+template <typename I, typename T>
 class const_packed_iterator {
  public:
+  using value_type = pair<I, T>;
+  using const_value_type = const pair<I, T>;
+  using size_type = typename std::vector<value_type>::size_type;
+  using pointer = value_type*;
+  using const_pointer = const_value_type*;
+  using reference = value_type&;
+  using const_reference = const_value_type&;
+  using difference_type = size_t;
+  using iterator_category = std::bidirectional_iterator_tag;
+
   const_packed_iterator() : index(-1), packed(nullptr) {}
 
-  const_packed_iterator(vector<pair<size_t, T>>* packed, size_t index = 0)
+  const_packed_iterator(vector<value_type>* packed, size_type index = 0)
       : index(index), packed(packed) {}
 
   const_packed_iterator(const const_packed_iterator& other)
@@ -112,12 +128,12 @@ class const_packed_iterator {
     return !(*this == other);
   }
 
-  const pair<size_t, T>& operator*() const { return *(packed->data() + index); }
-  const pair<size_t, T>* operator->() const { return packed->data() + index; }
+  const_reference operator*() const { return *(packed->data() + index); }
+  const_pointer operator->() const { return packed->data() + index; }
 
  protected:
-  size_t index;
-  const vector<pair<size_t, T>>* packed;
+  size_type index;
+  const vector<value_type>* packed;
 };
 
 template <typename T>

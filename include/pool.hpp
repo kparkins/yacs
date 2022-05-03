@@ -31,6 +31,20 @@ constexpr size_t POOL_UNALLOCATED_INDEX = static_cast<size_t>(-1);
 template <typename T>
 class packed_pool {
  public:
+  using sparse_index_type = size_t;
+  using packed_value_type = pair<sparse_index_type, T>;
+  using size_type = typename std::vector<packed_value_type>::size_type;
+  using value_iterator = packed_value_iterator<T>;
+  using reverse_value_iterator = std::reverse_iterator<value_iterator>;
+
+  using const_packed_iterator = const_packed_iterator<sparse_index_type, T>;
+  using const_reverse_packed_iterator =
+      std::reverse_iterator<const_packed_iterator>;
+
+  using const_sparse_iterator = const_sparse_iterator<T>;
+  using const_reverse_sparse_iterator =
+      std::reverse_iterator<const_sparse_iterator>;
+
   packed_pool();
   packed_pool(packed_pool&& other);
   packed_pool(const packed_pool& other);
@@ -40,58 +54,64 @@ class packed_pool {
   packed_pool& operator=(packed_pool&& other);
 
   template <typename... Args>
-  T& construct(size_t sparse_index, Args&&... args);
+  T& construct(sparse_index_type sparse_index, Args&&... args);
 
-  void destroy(size_t sparse_index);
+  void destroy(sparse_index_type sparse_index);
   void destroy();
 
-  inline bool contains(size_t sparse_index) const;
+  inline bool contains(sparse_index_type sparse_index) const;
 
-  inline T& access(size_t sparse_index);
-  inline T& operator[](size_t sparse_index);
-  inline const T& access(size_t sparse_index) const;
-  inline const T& operator[](size_t sparse_index) const;
+  inline T& access(sparse_index_type sparse_index);
+  inline T& operator[](sparse_index_type sparse_index);
+  inline const T& access(sparse_index_type sparse_index) const;
+  inline const T& operator[](sparse_index_type sparse_index) const;
 
-  inline size_t size() const;
-  inline size_t capacity() const;
+  inline size_type size() const;
+  inline size_type capacity() const;
   inline bool empty() const;
-  inline void reserve(size_t n);
+  inline void reserve(size_type n);
 
-  packed_value_iterator<T> begin();
-  packed_value_iterator<T> end();
+  value_iterator begin();
+  value_iterator end();
+  reverse_value_iterator rbegin();
+  reverse_value_iterator rend();
 
-  const_packed_iterator<T> packed_begin() const;
-  const_packed_iterator<T> packed_end() const;
+  const_packed_iterator packed_begin() const;
+  const_packed_iterator packed_end() const;
+  const_reverse_packed_iterator rpacked_begin() const;
+  const_reverse_packed_iterator rpacked_end() const;
 
-  const_sparse_iterator<T> sparse_begin() const;
-  const_sparse_iterator<T> sparse_end() const;
+  const_sparse_iterator sparse_begin() const;
+  const_sparse_iterator sparse_end() const;
+  const_reverse_sparse_iterator rsparse_begin() const;
+  const_reverse_sparse_iterator rsparse_end() const;
 
   void sort();
   void sort(function<bool(const T&, const T&)> comparator);
-  void sort(const vector<size_t>& sparse_order);
-  void sort(const_sparse_iterator<T>& begin, const_sparse_iterator<T>& end);
+  void sort(const vector<sparse_index_type>& sparse_order);
+  void sort(const_sparse_iterator begin, const_sparse_iterator end);
 
  protected:
-  T& internal_access(size_t sparse_index) {
+  T& internal_access(sparse_index_type sparse_index) {
     assert(sparse_index < m_sparse.size());
     assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
     return get<1>(m_packed[m_sparse[sparse_index]]);
   }
 
-  const T& internal_access(size_t sparse_index) const {
+  const T& internal_access(sparse_index_type sparse_index) const {
     assert(sparse_index < m_sparse.size());
     assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
     return get<1>(m_packed[m_sparse[sparse_index]]);
   }
 
   inline void fix_indices() {
-    for (size_t i = 0; i < m_packed.size(); ++i) {
+    for (size_type i = 0; i < m_packed.size(); ++i) {
       m_sparse[m_packed[i].first] = i;
     }
   }
 
-  vector<pair<size_t, T>> m_packed;
-  vector<size_t> m_sparse;
+  vector<pair<sparse_index_type, T>> m_packed;
+  vector<sparse_index_type> m_sparse;
 };
 
 template <typename T>
@@ -126,12 +146,12 @@ packed_pool<T>& packed_pool<T>::operator=(packed_pool&& other) {
 
 template <typename T>
 template <typename... Args>
-T& packed_pool<T>::construct(size_t sparse_index, Args&&... args) {
+T& packed_pool<T>::construct(sparse_index_type sparse_index, Args&&... args) {
   if (sparse_index >= m_sparse.size()) {
     m_sparse.resize(sparse_index + 1, POOL_UNALLOCATED_INDEX);
   }
   assert(m_sparse[sparse_index] == POOL_UNALLOCATED_INDEX);
-  size_t packed_index = m_packed.size();
+  sparse_index_type packed_index = m_packed.size();
   m_sparse[sparse_index] = packed_index;
   m_packed.emplace_back(piecewise_construct, forward_as_tuple(sparse_index),
                         forward_as_tuple(forward<Args>(args)...));
@@ -140,13 +160,13 @@ T& packed_pool<T>::construct(size_t sparse_index, Args&&... args) {
 }
 
 template <typename T>
-void packed_pool<T>::destroy(size_t sparse_index) {
+void packed_pool<T>::destroy(sparse_index_type sparse_index) {
   assert(sparse_index < m_sparse.size());
   assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
 
-  size_t packed_index = m_sparse[sparse_index];
-  size_t last_packed_index = m_packed.size() - 1;
-  size_t last_sparse_index = get<0>(m_packed[last_packed_index]);
+  sparse_index_type packed_index = m_sparse[sparse_index];
+  sparse_index_type last_packed_index = m_packed.size() - 1;
+  sparse_index_type last_sparse_index = get<0>(m_packed[last_packed_index]);
 
   m_sparse[last_sparse_index] = packed_index;
   m_sparse[sparse_index] = POOL_UNALLOCATED_INDEX;
@@ -158,7 +178,7 @@ void packed_pool<T>::destroy(size_t sparse_index) {
 
 template <typename T>
 void packed_pool<T>::destroy() {
-  for (int i = 0; i < m_sparse.size(); ++i) {
+  for (size_type i = 0; i < m_sparse.size(); ++i) {
     if (m_sparse[i] != POOL_UNALLOCATED_INDEX) {
       destroy(i);
     }
@@ -166,38 +186,39 @@ void packed_pool<T>::destroy() {
 }
 
 template <typename T>
-inline bool packed_pool<T>::contains(size_t sparse_index) const {
+inline bool packed_pool<T>::contains(sparse_index_type sparse_index) const {
   return sparse_index < m_sparse.size() &&
          m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX;
 }
 
 template <typename T>
-inline T& packed_pool<T>::access(size_t sparse_index) {
+inline T& packed_pool<T>::access(sparse_index_type sparse_index) {
   return internal_access(sparse_index);
 }
 
 template <typename T>
-inline T& packed_pool<T>::operator[](size_t sparse_index) {
+inline T& packed_pool<T>::operator[](sparse_index_type sparse_index) {
   return internal_access(sparse_index);
 }
 
 template <typename T>
-inline const T& packed_pool<T>::access(size_t sparse_index) const {
+inline const T& packed_pool<T>::access(sparse_index_type sparse_index) const {
   return internal_access(sparse_index);
 }
 
 template <typename T>
-inline const T& packed_pool<T>::operator[](size_t sparse_index) const {
+inline const T& packed_pool<T>::operator[](
+    sparse_index_type sparse_index) const {
   return internal_access(sparse_index);
 }
 
 template <typename T>
-inline size_t packed_pool<T>::size() const {
+inline typename packed_pool<T>::size_type packed_pool<T>::size() const {
   return m_packed.size();
 }
 
 template <typename T>
-inline size_t packed_pool<T>::capacity() const {
+inline typename packed_pool<T>::size_type packed_pool<T>::capacity() const {
   return m_packed.capacity();
 }
 
@@ -207,38 +228,76 @@ inline bool packed_pool<T>::empty() const {
 }
 
 template <typename T>
-inline void packed_pool<T>::reserve(size_t n) {
+inline void packed_pool<T>::reserve(size_type n) {
   m_packed.reserve(n);
 }
 
 template <typename T>
-packed_value_iterator<T> packed_pool<T>::begin() {
-  return packed_value_iterator<T>(&m_packed);
+typename packed_pool<T>::value_iterator packed_pool<T>::begin() {
+  return value_iterator(&m_packed);
 }
 
 template <typename T>
-packed_value_iterator<T> packed_pool<T>::end() {
-  return packed_value_iterator<T>(&m_packed, m_packed.size());
+typename packed_pool<T>::value_iterator packed_pool<T>::end() {
+  return value_iterator(&m_packed, m_packed.size());
 }
 
 template <typename T>
-const_packed_iterator<T> packed_pool<T>::packed_begin() const {
-  return const_packed_iterator<T>(m_packed);
+typename packed_pool<T>::reverse_value_iterator packed_pool<T>::rbegin() {
+  return std::make_reverse_iterator(end());
 }
 
 template <typename T>
-const_packed_iterator<T> packed_pool<T>::packed_end() const {
-  return const_packed_iterator<T>(m_packed), m_packed.size();
+typename packed_pool<T>::reverse_value_iterator packed_pool<T>::rend() {
+  return std::make_reverse_iterator(begin());
 }
 
 template <typename T>
-const_sparse_iterator<T> packed_pool<T>::sparse_begin() const {
-  return const_sparse_iterator<T>(&m_packed);
+typename packed_pool<T>::const_packed_iterator packed_pool<T>::packed_begin()
+    const {
+  return const_packed_iterator(m_packed);
 }
 
 template <typename T>
-const_sparse_iterator<T> packed_pool<T>::sparse_end() const {
-  return const_sparse_iterator<T>(&m_packed, m_packed.size());
+typename packed_pool<T>::const_packed_iterator packed_pool<T>::packed_end()
+    const {
+  return const_packed_iterator(m_packed), m_packed.size();
+}
+
+template <typename T>
+typename packed_pool<T>::const_reverse_packed_iterator
+packed_pool<T>::rpacked_begin() const {
+  return std::make_reverse_iterator(packed_end());
+}
+
+template <typename T>
+typename packed_pool<T>::const_reverse_packed_iterator
+packed_pool<T>::rpacked_end() const {
+  return std::make_reverse_iterator(packed_begin());
+}
+
+template <typename T>
+typename packed_pool<T>::const_sparse_iterator packed_pool<T>::sparse_begin()
+    const {
+  return const_sparse_iterator(&m_packed);
+}
+
+template <typename T>
+typename packed_pool<T>::const_sparse_iterator packed_pool<T>::sparse_end()
+    const {
+  return const_sparse_iterator(&m_packed, m_packed.size());
+}
+
+template <typename T>
+typename packed_pool<T>::const_reverse_sparse_iterator
+packed_pool<T>::rsparse_begin() const {
+  return std::make_reverse_iterator(sparse_begin());
+}
+
+template <typename T>
+typename packed_pool<T>::const_reverse_sparse_iterator
+packed_pool<T>::rsparse_end() const {
+  return std::make_reverse_iterator(sparse_end());
 }
 
 template <typename T>
@@ -276,8 +335,8 @@ void packed_pool<T>::sort(const vector<size_t>& sparse_order) {
 }
 
 template <typename T>
-void packed_pool<T>::sort(const_sparse_iterator<T>& begin,
-                          const_sparse_iterator<T>& end) {
+void packed_pool<T>::sort(const_sparse_iterator begin,
+                          const_sparse_iterator end) {
   // TODO
 }
 
