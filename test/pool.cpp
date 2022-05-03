@@ -36,10 +36,10 @@ bool packed_pool_deep_equal(const yacs::packed_pool<T>& left,
   return true;
 }
 
-template <typename T>
-bool packed_pool_iterator_equal(yacs::packed_value_iterator<T>& it1,
-                                yacs::packed_value_iterator<T>& it2,
-                                const yacs::packed_value_iterator<T>& end) {
+template <typename T, typename I = size_t>
+bool packed_pool_iterator_equal(yacs::packed_value_iterator<I, T>& it1,
+                                yacs::packed_value_iterator<I, T>& it2,
+                                const yacs::packed_value_iterator<I, T>& end) {
   bool result = true;
   for (; it1 != end; ++it1, ++it2) {
     result &= *it1 == *it2;
@@ -179,8 +179,8 @@ TEST_F(packed_pool_test, packed_pool_empty) {
 }
 
 TEST_F(packed_pool_test, packed_mutable_iterator_default_constructor) {
-  yacs::packed_value_iterator<data_struct> it1;
-  yacs::packed_value_iterator<data_struct> it2;
+  yacs::packed_value_iterator<size_t, data_struct> it1;
+  yacs::packed_value_iterator<size_t, data_struct> it2;
   ASSERT_EQ(it1, it2);
 }
 

@@ -34,14 +34,14 @@ class packed_pool {
   using sparse_index_type = size_t;
   using packed_value_type = pair<sparse_index_type, T>;
   using size_type = typename std::vector<packed_value_type>::size_type;
-  using value_iterator = packed_value_iterator<T>;
+  using value_iterator = packed_value_iterator<sparse_index_type, T>;
   using reverse_value_iterator = std::reverse_iterator<value_iterator>;
 
   using const_packed_iterator = const_packed_iterator<sparse_index_type, T>;
   using const_reverse_packed_iterator =
       std::reverse_iterator<const_packed_iterator>;
 
-  using const_sparse_iterator = const_sparse_iterator<T>;
+  using const_sparse_iterator = const_sparse_iterator<sparse_index_type, T>;
   using const_reverse_sparse_iterator =
       std::reverse_iterator<const_sparse_iterator>;
 

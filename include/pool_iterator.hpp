@@ -10,18 +10,24 @@ using std::vector;
 
 namespace yacs {
 
-template <typename T>
+template <typename I, typename T>
 class packed_value_iterator {
  public:
   using value_type = T;
-  using pointer = T*;
-  using reference = T&;
-  using difference_type = size_t;
+  using internal_value_type = pair<I, T>;
+  using const_value_type = const T;
+  using size_type = typename std::vector<internal_value_type>::size_type;
+  using pointer = value_type*;
+  using const_pointer = const_value_type*;
+  using reference = value_type&;
+  using const_reference = const_value_type&;
+  using difference_type = typename std::vector<internal_value_type>::size_type;
   using iterator_category = std::bidirectional_iterator_tag;
 
   packed_value_iterator() : index(-1), packed(nullptr) {}
 
-  packed_value_iterator(vector<pair<size_t, T>>* packed, size_t index = 0)
+  packed_value_iterator(vector<internal_value_type>* packed,
+                        size_type index = 0)
       : index(index), packed(packed) {}
 
   packed_value_iterator(const packed_value_iterator& other)
@@ -63,12 +69,12 @@ class packed_value_iterator {
     return !(*this == other);
   }
 
-  T& operator*() const { return (*(packed->data() + index)).second; }
-  T* operator->() const { return &(*(packed->data() + index)).second; }
+  reference operator*() const { return (*(packed->data() + index)).second; }
+  pointer operator->() const { return &(*(packed->data() + index)).second; }
 
  protected:
-  size_t index;
-  vector<pair<size_t, T>>* packed;
+  size_type index;
+  vector<internal_value_type>* packed;
 };
 
 template <typename I, typename T>
@@ -136,12 +142,24 @@ class const_packed_iterator {
   const vector<value_type>* packed;
 };
 
-template <typename T>
+template <typename I, typename T>
 class const_sparse_iterator {
  public:
+  using value_type = I;
+  using internal_value_type = pair<I, T>;
+  using const_value_type = const I;
+  using size_type = typename std::vector<internal_value_type>::size_type;
+  using pointer = value_type*;
+  using const_pointer = const_value_type*;
+  using reference = value_type&;
+  using const_reference = const_value_type&;
+  using difference_type = typename std::vector<internal_value_type>::size_type;
+  using iterator_category = std::bidirectional_iterator_tag;
+
   const_sparse_iterator() : index(-1), packed(nullptr) {}
 
-  const_sparse_iterator(const vector<pair<size_t, T>>* packed, size_t index = 0)
+  const_sparse_iterator(const vector<internal_value_type>* packed,
+                        size_type index = 0)
       : index(index), packed(packed) {}
 
   const_sparse_iterator(const const_sparse_iterator& other)
@@ -183,15 +201,17 @@ class const_sparse_iterator {
     return !(*this == other);
   }
 
-  const size_t& operator*() const { return (*(packed->data() + index)).first; }
+  const_reference operator*() const {
+    return (*(packed->data() + index)).first;
+  }
 
-  const size_t* operator->() const {
+  const_pointer operator->() const {
     return &(*(packed->data() + index)).first;
   }
 
  protected:
-  size_t index;
-  const vector<pair<size_t, T>>* packed;
+  size_type index;
+  const vector<internal_value_type>* packed;
 };
 
 }  // namespace yacs
