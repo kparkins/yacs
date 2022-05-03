@@ -150,6 +150,12 @@ class dense_pool {
     return get<1>(m_packed[m_sparse[sparse_index]]);
   }
 
+  const T& internal_access(size_t sparse_index) const {
+    assert(sparse_index < m_sparse.size());
+    assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
+    return get<1>(m_packed[m_sparse[sparse_index]]);
+  }
+
   inline void fix_indices() {
     for (size_t i = 0; i < m_packed.size(); ++i) {
       m_sparse[m_packed[i].first] = i;
@@ -224,9 +230,9 @@ void dense_pool<T>::destroy(size_t sparse_index) {
 
 template <typename T>
 void dense_pool<T>::destroy() {
-  for (size_t index : m_sparse) {
-    if (index != POOL_UNALLOCATED_INDEX) {
-      destroy(index);
+  for (int i = 0; i < m_sparse.size(); ++i) {
+    if (m_sparse[i] != POOL_UNALLOCATED_INDEX) {
+      destroy(i);
     }
   }
 }

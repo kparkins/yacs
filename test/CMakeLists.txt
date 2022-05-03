@@ -55,4 +55,4 @@ function(SETUP_TEST TEST_NAME TEST_SOURCES)
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 endfunction()
 
-SETUP_TEST(pool pool.cpp)
+SETUP_TEST(pool pool.cpp data_struct.hpp)
