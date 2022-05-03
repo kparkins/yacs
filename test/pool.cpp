@@ -49,6 +49,13 @@ bool dense_pool_iterator_equal(yacs::dense_pool_iterator<T>& it1,
   return result;
 }
 
+template <typename T>
+void move_iterator(T& it, size_t n) {
+  for (size_t i = 0; i < n; ++i) {
+    ++it;
+  }
+}
+
 TEST_F(dense_pool_test, dense_pool_move_constructor) {
   yacs::dense_pool<data_struct> moved(move(pool));
   ASSERT_EQ(pool.size(), 0);
@@ -182,18 +189,14 @@ TEST_F(dense_pool_test, dense_pool_basic_iterator) {
 
 TEST_F(dense_pool_test, dense_pool_mutable_iterator_copy_construct) {
   auto it = pool.begin();
-  for (int i = 0; i < 5; ++i) {
-    ++it;
-  }
+  move_iterator(it, 5);
   auto copy_it(it);
   ASSERT_TRUE(dense_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
 }
 
 TEST_F(dense_pool_test, dense_pool_mutable_iterator_copy_assignment) {
   auto it = pool.begin();
-  for (int i = 0; i < 3; ++i) {
-    ++it;
-  }
+  move_iterator(it, 3);
   auto copy_it = it;
   ASSERT_TRUE(dense_pool_iterator_equal<data_struct>(it, copy_it, pool.end()));
 }
@@ -201,7 +204,7 @@ TEST_F(dense_pool_test, dense_pool_mutable_iterator_copy_assignment) {
 TEST_F(dense_pool_test, dense_pool_mutable_iterator_post_increment) {
   auto post_it = pool.begin();
   auto pre_it = pool.begin();
-  post_it++;
+  move_iterator(post_it, 1);
   for (; post_it != pool.end();) {
     ASSERT_EQ((post_it++)->y, (++pre_it)->y);
   }
