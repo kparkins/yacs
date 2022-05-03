@@ -22,9 +22,6 @@ target_compile_features(gtest_main PUBLIC cxx_std_17)
 target_compile_features(gmock PUBLIC cxx_std_17)
 target_compile_features(gmock_main PUBLIC cxx_std_17)
 
-include_directories($<TARGET_PROPERTY:yacs,INTERFACE_INCLUDE_DIRECTORIES>)
-add_compile_options($<TARGET_PROPERTY:yacs,INTERFACE_COMPILE_OPTIONS>)
-
 function(SETUP_TARGET TARGET_NAME)
     target_compile_features(${TARGET_NAME} PRIVATE ${YACS_CXX_STD})
     target_link_libraries(${TARGET_NAME} PRIVATE yacs)
@@ -51,7 +48,7 @@ endfunction()
 function(SETUP_TEST TEST_NAME TEST_SOURCES)
     add_executable(${TEST_NAME} ${TEST_SOURCES})
     target_link_libraries(${TEST_NAME} PRIVATE GTest::Main)
-    SETUP_TARGET(${TEST_NAME} ${ARGN})
+    SETUP_TARGET(${TEST_NAME})
     add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
 endfunction()
 
