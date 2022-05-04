@@ -25,9 +25,6 @@ class pool {
   virtual ~pool() = default;
 };
 
-constexpr size_t POOL_DEFAULT_CAPACITY = 8192;
-constexpr size_t POOL_UNALLOCATED_INDEX = static_cast<size_t>(-1);
-
 template <typename T>
 class packed_pool {
  public:
@@ -44,6 +41,9 @@ class packed_pool {
   using const_sparse_iterator = const_sparse_iterator<sparse_index_type, T>;
   using const_reverse_sparse_iterator =
       std::reverse_iterator<const_sparse_iterator>;
+
+  static constexpr size_type DEFAULT_CAPACITY = 8192;
+  static constexpr size_type UNALLOCATED_INDEX = static_cast<size_type>(-1);
 
   packed_pool();
   packed_pool(packed_pool&& other);
@@ -88,19 +88,18 @@ class packed_pool {
 
   void sort();
   void sort(function<bool(const T&, const T&)> comparator);
-  void sort(const vector<sparse_index_type>& sparse_order);
-  void sort(const_sparse_iterator begin, const_sparse_iterator end);
+  void sort(const_sparse_iterator it, const_sparse_iterator end);
 
  protected:
   T& internal_access(sparse_index_type sparse_index) {
     assert(sparse_index < m_sparse.size());
-    assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
+    assert(m_sparse[sparse_index] != UNALLOCATED_INDEX);
     return get<1>(m_packed[m_sparse[sparse_index]]);
   }
 
   const T& internal_access(sparse_index_type sparse_index) const {
     assert(sparse_index < m_sparse.size());
-    assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
+    assert(m_sparse[sparse_index] != UNALLOCATED_INDEX);
     return get<1>(m_packed[m_sparse[sparse_index]]);
   }
 
@@ -116,7 +115,7 @@ class packed_pool {
 
 template <typename T>
 packed_pool<T>::packed_pool() {
-  m_packed.reserve(POOL_DEFAULT_CAPACITY);
+  m_packed.reserve(DEFAULT_CAPACITY);
 }
 
 template <typename T>
@@ -148,9 +147,9 @@ template <typename T>
 template <typename... Args>
 T& packed_pool<T>::construct(sparse_index_type sparse_index, Args&&... args) {
   if (sparse_index >= m_sparse.size()) {
-    m_sparse.resize(sparse_index + 1, POOL_UNALLOCATED_INDEX);
+    m_sparse.resize(sparse_index + 1, UNALLOCATED_INDEX);
   }
-  assert(m_sparse[sparse_index] == POOL_UNALLOCATED_INDEX);
+  assert(m_sparse[sparse_index] == UNALLOCATED_INDEX);
   sparse_index_type packed_index = m_packed.size();
   m_sparse[sparse_index] = packed_index;
   m_packed.emplace_back(piecewise_construct, forward_as_tuple(sparse_index),
@@ -162,14 +161,14 @@ T& packed_pool<T>::construct(sparse_index_type sparse_index, Args&&... args) {
 template <typename T>
 void packed_pool<T>::destroy(sparse_index_type sparse_index) {
   assert(sparse_index < m_sparse.size());
-  assert(m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX);
+  assert(m_sparse[sparse_index] != UNALLOCATED_INDEX);
 
   sparse_index_type packed_index = m_sparse[sparse_index];
   sparse_index_type last_packed_index = m_packed.size() - 1;
   sparse_index_type last_sparse_index = get<0>(m_packed[last_packed_index]);
 
   m_sparse[last_sparse_index] = packed_index;
-  m_sparse[sparse_index] = POOL_UNALLOCATED_INDEX;
+  m_sparse[sparse_index] = UNALLOCATED_INDEX;
   if (packed_index != last_packed_index) {
     swap(m_packed[packed_index], m_packed[last_packed_index]);
   }
@@ -179,7 +178,7 @@ void packed_pool<T>::destroy(sparse_index_type sparse_index) {
 template <typename T>
 void packed_pool<T>::destroy() {
   for (size_type i = 0; i < m_sparse.size(); ++i) {
-    if (m_sparse[i] != POOL_UNALLOCATED_INDEX) {
+    if (m_sparse[i] != UNALLOCATED_INDEX) {
       destroy(i);
     }
   }
@@ -188,7 +187,7 @@ void packed_pool<T>::destroy() {
 template <typename T>
 inline bool packed_pool<T>::contains(sparse_index_type sparse_index) const {
   return sparse_index < m_sparse.size() &&
-         m_sparse[sparse_index] != POOL_UNALLOCATED_INDEX;
+         m_sparse[sparse_index] != UNALLOCATED_INDEX;
 }
 
 template <typename T>
@@ -316,11 +315,12 @@ void packed_pool<T>::sort(function<bool(const T&, const T&)> comparator) {
 }
 
 template <typename T>
-void packed_pool<T>::sort(const vector<size_t>& sparse_order) {
-  size_t packed_cursor = 0;
-  for (auto sparse_index : sparse_order) {
+void packed_pool<T>::sort(const_sparse_iterator it, const_sparse_iterator end) {
+  size_type packed_cursor = 0;
+  for (; it != end; ++it) {
+    auto sparse_index = *it;
     if (sparse_index >= m_sparse.size() ||
-        m_sparse[sparse_index] == POOL_UNALLOCATED_INDEX) {
+        m_sparse[sparse_index] == UNALLOCATED_INDEX) {
       continue;
     }
 
@@ -332,12 +332,6 @@ void packed_pool<T>::sort(const vector<size_t>& sparse_order) {
     }
     packed_cursor += 1;
   }
-}
-
-template <typename T>
-void packed_pool<T>::sort(const_sparse_iterator begin,
-                          const_sparse_iterator end) {
-  // TODO
 }
 
 }  // namespace yacs

@@ -183,6 +183,63 @@ TEST_F(packed_pool_test, packed_pool_empty) {
   ASSERT_FALSE(pool.empty());
 }
 
+TEST_F(packed_pool_test, packed_pool_sort) {
+  pool.destroy();
+  for (int i = 19; i >= 0; --i) {
+    pool.construct(i, 2 * i, -2 * i);
+  }
+  int count = 19;
+  for (auto it = pool.begin(); it != pool.end(); ++it) {
+    ASSERT_EQ(*it->x, 2 * count);
+    ASSERT_EQ(it->y, -2 * count);
+    --count;
+  }
+  pool.sort();
+  count = 0;
+  for (auto it = pool.begin(); it != pool.end(); ++it) {
+    ASSERT_EQ(*it->x, 2 * count);
+    ASSERT_EQ(it->y, -2 * count);
+    ++count;
+  }
+}
+
+TEST_F(packed_pool_test, packed_pool_sort_comparator) {
+  auto comp = [](const data_struct& lhs, const data_struct& rhs) {
+    return lhs.y < rhs.y;
+  };
+  auto it = pool.begin();
+  auto prev = it->y;
+  ++it;
+  for (; it != pool.end(); ++it) {
+    ASSERT_GT(prev, it->y);
+  }
+  pool.sort(comp);
+  it = pool.begin();
+  prev = (it++)->y;
+  for (; it != pool.end(); ++it) {
+    ASSERT_LT(prev, it->y);
+  }
+}
+
+TEST_F(packed_pool_test, packed_pool_sort_iterator) {
+  vector<size_t> indices{5, 1, 3, 7, 2, 0, 9, 8, 4, 6};
+  yacs::packed_pool<data_struct> ordered;
+  for (auto index : indices) {
+    ordered.construct(index, index, index);
+  }
+  auto it = pool.sparse_begin();
+  size_t count = 0;
+  for (; it != pool.sparse_end(); ++it) {
+    ASSERT_EQ(count++, *it);
+  }
+  pool.sort(ordered.sparse_begin(), ordered.sparse_end());
+  it = pool.sparse_begin();
+  count = 0;
+  for (; it != pool.sparse_end(); ++it) {
+    ASSERT_EQ(indices[count++], *it);
+  }
+}
+
 TEST_F(packed_pool_test, packed_mutable_iterator_default_constructor) {
   yacs::packed_value_iterator<size_t, data_struct> it1;
   yacs::packed_value_iterator<size_t, data_struct> it2;

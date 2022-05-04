@@ -6,6 +6,7 @@
 
 using std::get;
 using std::pair;
+using std::swap;
 using std::vector;
 
 namespace yacs {
