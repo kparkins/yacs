@@ -324,9 +324,9 @@ void packed_pool<T>::sort(const_sparse_iterator it, const_sparse_iterator end) {
       continue;
     }
 
-    size_t sparse_cursor = m_packed[packed_cursor].first;
+    size_type sparse_cursor = m_packed[packed_cursor].first;
     if (sparse_index != sparse_cursor) {
-      size_t packed_index = m_sparse[sparse_index];
+      size_type packed_index = m_sparse[sparse_index];
       swap(m_packed[packed_cursor], m_packed[packed_index]);
       swap(m_sparse[sparse_cursor], m_sparse[sparse_index]);
     }

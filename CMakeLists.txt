@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
 # Setup version file
 set(YACS_VERSION_REGEX "#define YACS_VERSION_.*[ \t]+(.+)")
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/version.h" YACS_VERSION REGEX ${YACS_VERSION_REGEX})
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/include/version.hpp" YACS_VERSION REGEX ${YACS_VERSION_REGEX})
 list(TRANSFORM YACS_VERSION REPLACE ${YACS_VERSION_REGEX} "\\1")
 string(JOIN "." YACS_VERSION ${YACS_VERSION})
 
@@ -48,6 +48,7 @@ target_sources(
     yacs 
     INTERFACE
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/component.hpp>
 )
 
 if(YACS_HAS_SANITIZER)

@@ -53,3 +53,4 @@ function(SETUP_TEST TEST_NAME TEST_SOURCES)
 endfunction()
 
 SETUP_TEST(pool pool.cpp data_struct.hpp)
+SETUP_TEST(component component.cpp data_struct.hpp)

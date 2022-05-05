@@ -14,6 +14,7 @@ class packed_pool_test : public ::testing::Test {
       yacs::packed_pool<data_struct>::const_packed_iterator;
   using const_sparse_iterator_type =
       yacs::packed_pool<data_struct>::const_sparse_iterator;
+
   void SetUp() {
     for (int i = 0; i < 10; i++) {
       pool.construct(i, i, -i);
