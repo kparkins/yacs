@@ -48,6 +48,7 @@ target_sources(
     yacs 
     INTERFACE
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/src/types.cpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/src/registry.cpp>
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.hpp>
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/types.hpp>
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/entity.hpp>

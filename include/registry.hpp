@@ -6,7 +6,6 @@
 #include <memory>
 #include <vector>
 
-#include "entity.hpp"
 #include "pool.hpp"
 #include "types.hpp"
 
@@ -15,40 +14,68 @@ using std::vector;
 
 namespace yacs {
 
+class entity;
+
 class registry {
  public:
+  template <typename T>
+  using storage_type = yacs::packed_pool<T>;
+
   registry() {}
-
-  entity create() {
-    if (m_free.size() > 0) {
-      entity_slot* slot = m_free.back();
-      m_free.pop_back();
-      return entity(&m_entities[slot->index], &m_pools);
+  ~registry() {
+    for (auto p : m_pools) {
+      delete p;
     }
-    auto index = m_entities.size();
-    auto& slot = m_entities.construct(index);
-    slot.index = index;
-    slot.version = 0;
-    slot.mask = 0;
-    return entity(&slot, &m_pools);
   }
 
-  void destroy(entity entity) {
-    auto& slot = entity.slot;
-    auto& mask = slot->mask;
-    for (auto i = 0; i < m_pools.size() && i < MAX_COMPONENTS; ++i) {
-      if (mask.test(i)) {
-        auto& pool = m_pools[i];
-        pool->destroy(slot->index);
-        mask.reset(i);
-      }
-    }
-    ++slot->version;
-    m_free.push_back(slot);
+  registry(registry&& other) {
+    swap(m_entities, other.m_entities);
+    swap(m_free, other.m_free);
+    swap(m_pools, other.m_pools);
   }
 
-  entity get(entity_index index) {
-    return entity(&m_entities[index], &m_pools);
+  registry& operator=(registry&& other) {
+    swap(m_entities, other.m_entities);
+    swap(m_free, other.m_free);
+    swap(m_pools, other.m_pools);
+    return *this;
+  }
+
+  entity create();
+  entity get(entity_id id);
+
+  void destroy(entity_id id);
+  void destroy(entity entity);
+
+  template <typename T>
+  void destroy(entity_id id) {
+    auto component_index = component_traits<T>::id();
+    if (component_index >= m_pools.size()) {
+      return;
+    }
+    storage_type<T>* pool =
+        static_cast<storage_type<T>*>(m_pools[component_index]);
+    pool->destroy(get_entity_index(id));
+  }
+
+  template <typename T, typename... Args>
+  T& add(entity_id id, Args&&... args) {
+    auto component_index = component_traits<T>::id();
+    if (component_index >= m_pools.size()) {
+      m_pools.emplace_back(new packed_pool<T>());
+    }
+    storage_type<T>* pool =
+        static_cast<storage_type<T>*>(m_pools[component_index]);
+    return pool->construct(get_entity_index(id), forward<Args>(args)...);
+  }
+
+  template <typename T>
+  T& get(entity_id id) {
+    auto component_index = component_traits<T>::id();
+    assert(component_index < m_pools.size());
+    storage_type<T>* pool =
+        static_cast<storage_type<T>*>(m_pools[component_index]);
+    return pool->access(get_entity_index(id));
   }
 
   void view() {}
@@ -67,8 +94,11 @@ class registry {
   }
 
  protected:
+  registry(const registry& other) = delete;
+  registry& operator=(const registry& other) = delete;
+
   vector<entity_slot*> m_free;
-  vector<unique_ptr<pool>> m_pools;
+  vector<pool*> m_pools;
   packed_pool<entity_slot> m_entities;
 };
 

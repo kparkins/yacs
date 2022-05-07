@@ -54,3 +54,4 @@ endfunction()
 
 SETUP_TEST(pool pool.cpp data_struct.hpp)
 SETUP_TEST(component component.cpp data_struct.hpp)
+SETUP_TEST(registry registry.cpp data_struct.hpp)

@@ -5,7 +5,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/build/test/pool",
+            "program": "${workspaceFolder}/build/test/${fileBasenameNoExtension}",
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {

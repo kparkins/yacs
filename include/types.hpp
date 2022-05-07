@@ -24,6 +24,10 @@ typedef struct entity_slot {
   component_mask mask;
 } entity_slot;
 
+entity_index get_entity_index(entity_id id);
+entity_version get_entity_version(entity_id id);
+entity_id get_entity_id(entity_index index, entity_version version);
+
 extern component_id g_component_id_counter;
 
 template <typename T>
