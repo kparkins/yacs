@@ -47,8 +47,14 @@ target_compile_features(yacs INTERFACE cxx_std_17)
 target_sources(
     yacs 
     INTERFACE
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/src/types.cpp>
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/types.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/entity.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/version.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/registry.hpp>
         $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/component.hpp>
+        $<BUILD_INTERFACE:${yacs_SOURCE_DIR}/include/pool_iterator.hpp>
 )
 
 if(YACS_HAS_SANITIZER)
