@@ -19,7 +19,8 @@ typedef uint32_t entity_index;
 typedef uint32_t entity_version;
 
 typedef struct entity_slot {
-  entity_id id;
+  entity_index index;
+  entity_version version;
   component_mask mask;
 } entity_slot;
 

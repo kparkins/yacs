@@ -22,11 +22,13 @@ namespace yacs {
 
 class pool {
  public:
+  using index_type = size_t;
   virtual ~pool() = default;
+  virtual void destroy(index_type index) = 0;
 };
 
 template <typename T>
-class packed_pool {
+class packed_pool : public pool {
  public:
   using index_type = size_t;
   using packed_value_type = pair<index_type, T>;
@@ -56,7 +58,7 @@ class packed_pool {
   template <typename... Args>
   T& construct(index_type sparse_index, Args&&... args);
 
-  void destroy(index_type sparse_index);
+  void destroy(index_type sparse_index) override;
   void destroy();
 
   inline bool contains(index_type sparse_index) const;
