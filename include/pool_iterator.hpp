@@ -91,7 +91,8 @@ class const_packed_iterator {
   using difference_type = size_t;
   using iterator_category = std::bidirectional_iterator_tag;
 
-  const_packed_iterator() : index(-1), packed(nullptr) {}
+  const_packed_iterator()
+      : index(static_cast<size_type>(-1)), packed(nullptr) {}
 
   const_packed_iterator(const vector<value_type>* packed, size_type index = 0)
       : index(index), packed(packed) {}

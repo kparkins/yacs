@@ -1,7 +1,8 @@
+#include "registry.hpp"
+
 #include <gtest/gtest.h>
 
 #include "entity.hpp"
-#include "registry.hpp"
 
 typedef struct position {
   int x;
@@ -16,7 +17,7 @@ TEST(registry_test, basic_test) {
   pos.y = 2;
   entity.remove<position>();
 
-  auto& p = entity.get<position>();
+  // auto& p = entity.get<position>();
 
   registry.destroy(entity);
 }

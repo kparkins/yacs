@@ -1,9 +1,11 @@
+#include "pool.hpp"
+
 #include <gtest/gtest.h>
+
 #include <iostream>
 #include <memory>
 
 #include "data_struct.hpp"
-#include "pool.hpp"
 
 using std::move;
 
@@ -43,8 +45,7 @@ bool packed_pool_deep_equal(const yacs::packed_pool<T>& left,
 }
 
 template <typename Iterator>
-bool packed_pool_iterator_equal(Iterator& it1,
-                                Iterator& it2,
+bool packed_pool_iterator_equal(Iterator& it1, Iterator& it2,
                                 const Iterator& end) {
   bool result = true;
   for (; it1 != end; ++it1, ++it2) {
@@ -122,7 +123,7 @@ TEST_F(packed_pool_test, packed_pool_contains) {
     ASSERT_TRUE(pool.contains(i));
   }
   ASSERT_FALSE(pool.contains(11));
-  ASSERT_FALSE(pool.contains(-1));
+  ASSERT_FALSE(pool.contains(static_cast<size_t>(-1)));
 }
 
 TEST_F(packed_pool_test, packed_value_access) {

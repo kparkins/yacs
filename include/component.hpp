@@ -8,7 +8,8 @@ namespace yacs {
 template <typename T, typename storage_type = packed_pool<T>>
 class component {
  public:
-  component() : index(-1), storage(nullptr) {}
+  component()
+      : index(static_cast<storage_type::size_type>(-1)), storage(nullptr) {}
   component(storage_type* storage, typename storage_type::index_type index)
       : index(index), storage(storage) {}
 
